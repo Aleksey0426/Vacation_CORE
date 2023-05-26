@@ -5,6 +5,7 @@ import requests
 from datetime import date, timedelta
 
 from config import URL_VACATION_SERVICE, PATH_VACATION
+from src.enums.GlobalEnums import GlobalErrorEnum
 from src.schemas.API.create_vacation import validate_response_error
 
 
@@ -26,7 +27,8 @@ from src.schemas.API.create_vacation import validate_response_error
     '@#$%^&*()',
     '"@#$%^&*()"',
     '0.001E03',
-    '2а'
+    '2а',
+    '😀🤱🙇‍♂️🌻⛳️🥙🏛🕯▶️⏹🇧🇱🇱🇨'
 ])
 def test_vacation_type_error_validation(get_new_token_collaborator, set_log, vacation_type_id):
     request = get_new_token_collaborator
@@ -40,17 +42,15 @@ def test_vacation_type_error_validation(get_new_token_collaborator, set_log, vac
     }
     r = requests.post(f'{URL_VACATION_SERVICE}{PATH_VACATION}', headers=headers,
                       json=payload)
-    # write log in file
-    # write_log = set_log(r, PATH_VACATION, payload)
 
     parse = validate_response_error(r.json())
 
-    if r.status_code != 400:
+    if r.status_code != 400 or parse != "Done":
         # write log in file
         write_log = set_log(r, PATH_VACATION, payload, headers)
 
-    assert r.status_code == 400
-    assert parse is None
+    assert r.status_code == 400, f'{GlobalErrorEnum.WRONG_STATUS_ERROR.value}'
+    assert parse == "Done", f'{GlobalErrorEnum.WRONG_VALIDATION_ERROR.value} : {parse}'
 
 
 @pytest.mark.parametrize('vacation_type_id', [
@@ -72,9 +72,9 @@ def test_vacation_type_error_lack_of_recording(get_new_token_collaborator, set_l
 
     parse = validate_response_error(r.json())
 
-    if r.status_code != 404:
+    if r.status_code != 404 or parse != "Done":
         # write log in file
         write_log = set_log(r, PATH_VACATION, payload, headers)
 
-    assert r.status_code == 404
-    assert parse is None
+    assert r.status_code == 404, f'{GlobalErrorEnum.WRONG_STATUS_ERROR.value}'
+    assert parse == "Done", f'{GlobalErrorEnum.WRONG_VALIDATION_ERROR.value} : {parse}'

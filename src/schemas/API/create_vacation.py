@@ -6,6 +6,14 @@ from typing import List
 from pydantic import BaseModel, validator, Field, ValidationError
 
 
+def successfully_response(json):
+    try:
+        ResponseSuccessfully.parse_obj(json)
+        return "Done"
+    except ValidationError as error:
+        return error.errors()
+
+
 class VacationType(BaseModel):
     id: int
     value: str
@@ -62,20 +70,34 @@ class ResponseSuccessfully(BaseModel):
 
 def validate_response_error(json):
     try:
-        ResponseErrorValidate.parse_obj(json)
+        if type(json) == dict:
+            ResponseErrorValidate.parse_obj(json)
+            return "Done"
+        elif type(json) == list:
+            ResponseErrorValidate.parse_obj(json.__getitem__(0))
+            return "Done"
+        else:
+            return "Test"
     except ValidationError as error:
-        print(error)
+        return error.errors()
 
 
-class ResponseErrorValidate(BaseModel):
+class ItemsValidate(BaseModel):
     id: str
     description: str
     timestamp: datetime
 
 
-# a = ResponseSuccessfully.parse_obj({
+class ResponseErrorValidate(BaseModel):
+    # list = List[ItemsValidate]
+    id: str
+    description: str
+    timestamp: datetime
+
+
+# a = {
 #     "id": 1466,
-#     "dateFrom": "01.08.20231111",
+#     "dateFrom": "01.08.2023111",
 #     "dateTo": "14.08.2023",
 #     "vacationType": {
 #         "id": 1,
@@ -91,13 +113,14 @@ class ResponseErrorValidate(BaseModel):
 #             "vacationStatus": "На согласовании"
 #         }
 #     ]
-# })
+# }
 #
+# print(successfully_response(a))
 
-# json = {
+# json = [{
 #     "id": "a9ed5a3e-9b58-4145-9a09-117495ab06e2",
 #     "description": "Expected array or string.\n at [Source: (org.springframework.util.StreamUtils$NonClosingInputStream); line: 3, column: 13] (through reference chain: com.irlix.microservice.vacationservice.controller.dto.vacation.VacationCreateRequest[\"dateTo\"])",
 #     "timestamp": "2023-05-19T13:30:54.630628633"
-# }
+# }]
 #
-# print(validate_response_error(json))
+# print(validate_response_error(json.__getitem__(0)))

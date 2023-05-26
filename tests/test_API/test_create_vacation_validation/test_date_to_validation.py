@@ -5,7 +5,8 @@ import requests
 from datetime import date, timedelta
 
 from config import URL_VACATION_SERVICE, PATH_VACATION
-from src.schemas.API.create_vacation import ResponseSuccessfully, validate_response_error
+from src.enums.GlobalEnums import GlobalErrorEnum
+from src.schemas.API.create_vacation import ResponseSuccessfully, validate_response_error, successfully_response
 
 
 @pytest.mark.parametrize('date_from , date_to', [
@@ -32,14 +33,14 @@ def test_date_to_successfully(get_new_token_collaborator, set_log, date_to, date
     r = requests.post(f'{URL_VACATION_SERVICE}{PATH_VACATION}', headers=headers,
                       json=payload)
 
-    if r.status_code != 201:
+    parse = successfully_response(r.json())
+
+    if r.status_code != 201 or parse != "Done":
         # write log in file
         write_log = set_log(r, PATH_VACATION, payload, headers)
 
-    schema = ResponseSuccessfully.parse_obj(r.json())
-
-    assert r.status_code == 201
-    assert schema is not ValueError
+    assert r.status_code == 201, f'{GlobalErrorEnum.WRONG_STATUS_ERROR.value}'
+    assert parse == "Done", f'{GlobalErrorEnum.WRONG_VALIDATION_ERROR.value} : {parse}'
 
 
 @pytest.mark.parametrize('date_from , date_to', [
@@ -60,7 +61,8 @@ def test_date_to_successfully(get_new_token_collaborator, set_log, date_to, date
     ['14.08.2023', 'null'],
     ['14.08.2023', 'true'],
     ['14.08.2023', ''],
-    ['14.08.2023', '!@#$%^&']
+    ['14.08.2023', '!@#$%^&'],
+    ['14.08.2023', '😀🤱🙇‍♂️🌻⛳️🥙🏛🕯▶️⏹🇧🇱🇱🇨']
 ])
 def test_date_to_error_validation(get_new_token_collaborator, set_log, date_to, date_from):
     request = get_new_token_collaborator
@@ -77,12 +79,12 @@ def test_date_to_error_validation(get_new_token_collaborator, set_log, date_to, 
 
     parse = validate_response_error(r.json())
 
-    if r.status_code != 400:
+    if r.status_code != 400 or parse != "Done":
         # write log in file
         write_log = set_log(r, PATH_VACATION, payload, headers)
 
-    assert r.status_code == 400
-    assert parse is None
+    assert r.status_code == 400, f'{GlobalErrorEnum.WRONG_STATUS_ERROR.value}'
+    assert parse == "Done", f'{GlobalErrorEnum.WRONG_VALIDATION_ERROR.value} : {parse}'
 
 
 def test_without_date_to(get_new_token_collaborator, set_log):
@@ -99,9 +101,9 @@ def test_without_date_to(get_new_token_collaborator, set_log):
 
     parse = validate_response_error(r.json())
 
-    if r.status_code != 400:
+    if r.status_code != 400 or parse != "Done":
         # write log in file
         write_log = set_log(r, PATH_VACATION, payload, headers)
 
-    assert r.status_code == 400
-    assert parse is None
+    assert r.status_code == 400, f'{GlobalErrorEnum.WRONG_STATUS_ERROR.value}'
+    assert parse == "Done", f'{GlobalErrorEnum.WRONG_VALIDATION_ERROR.value} : {parse}'

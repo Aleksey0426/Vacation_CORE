@@ -26,7 +26,7 @@ def get_new_token_collaborator():
     return r
 
 
-def write_log_request(r=None, path=None, payload=None, headers=None):
+def write_log_request(r=None, path=None, payload=None, headers=None, parse=None):
     now_time = datetime.timestamp(datetime.now())
     date_1 = date.today()
     file_path = f'./logs/api/{path}_{r.request.method}_{date_1}'
@@ -40,7 +40,9 @@ def write_log_request(r=None, path=None, payload=None, headers=None):
     file.write('Response \n')
     file.write('%s\n' % r.status_code)
     file.write('%s\n' % r.json())
-    file.write('%s\n')
+    file.write('\n')
+    file.write('Ошибка валидации')
+    file.write('%s\n' % parse)
     file.write('Request end\n')
     file.write('\n')
 

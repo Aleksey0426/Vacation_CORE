@@ -1,13 +1,11 @@
-import datetime
+from typing import List
 
 import pytest
 import requests
-from datetime import date, timedelta
 
-from pydantic import json
-
-from src.schemas.API.create_vacation import ResponseSuccessfully, ResponseErrorValidate, validate_response_error
-
+from src.enums.GlobalEnums import GlobalErrorEnum
+from src.schemas.API.create_vacation import ResponseSuccessfully, ResponseErrorValidate, validate_response_error, \
+    successfully_response
 from config import URL_VACATION_SERVICE, PATH_VACATION
 
 
@@ -28,14 +26,14 @@ def test_date_period_successfully(get_new_token_collaborator, set_log, date_to, 
     r = requests.post(f'{URL_VACATION_SERVICE}{PATH_VACATION}', headers=headers,
                       json=payload)
 
-    if r.status_code != 201:
+    schema = successfully_response(r.json())
+
+    if r.status_code != 201 or schema != "Done":
         # write log in file
         write_log = set_log(r, PATH_VACATION, payload, headers)
 
-    schema = ResponseSuccessfully.parse_obj(r.json())
-
-    assert r.status_code == 201
-    assert schema is not ValueError
+    assert r.status_code == 201, f'{GlobalErrorEnum.WRONG_STATUS_ERROR.value}'
+    assert schema == "Done", f'{GlobalErrorEnum.WRONG_VALIDATION_ERROR.value} = {schema}'
 
 
 @pytest.mark.parametrize('date_from , date_to, vacation_type_id', [
@@ -60,14 +58,11 @@ def test_date_period_unsuccessful(get_new_token_collaborator, set_log, date_to, 
     r = requests.post(f'{URL_VACATION_SERVICE}{PATH_VACATION}', headers=headers,
                       json=payload)
 
-    if r.status_code != 400:
-        # write log in file
-        write_log = set_log(r, PATH_VACATION, payload, headers)
-
     parse = validate_response_error(r.json())
 
-    # if parse is not None:
-    #     write_log = set_log(r, PATH_VACATION, payload, headers)
+    if r.status_code != 400 or parse != "Done":
+        # write log in file
+        write_log = set_log(r, PATH_VACATION, payload, headers, parse)
 
-    assert r.status_code == 400
-    assert parse is None
+    assert r.status_code == 400, f'{GlobalErrorEnum.WRONG_STATUS_ERROR.value}'
+    assert parse == "Done", f'{GlobalErrorEnum.WRONG_VALIDATION_ERROR.value} : {parse}'
